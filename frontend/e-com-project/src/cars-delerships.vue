@@ -115,22 +115,14 @@
     <span class="price-value">R{{ car.price }}</span>
   </div>
   <button class="buy-btn">Buy Now</button>
-</div>0
-
-                <div class="car-footer">
-                  <div class="car-price">
-                    <span class="price-label">Price</span>
-                    <span class="price-value">R{{ cars.price }}</span>
-                  </div>
-                  <button class="buy-btn">Buy Now</button>
-                </div>
+</div>
               </div>
             </div>
           </div>
           <div v-else class="no-cars">
-            <div class="no-cars-icon">🚫</div>
-            <h3>No vehicles found</h3>
-            <p>Try adjusting your filters to see available vehicles</p>
+            <span class="no-cars-icon">😔</span>
+            <h3>No cars found</h3>
+            <p>Try adjusting your filters or search criteria.</p>
           </div>
         </div>
       </main>
@@ -163,24 +155,21 @@ export default {
       ]
     };
   },
+computed: {
+  filteredCars() {
+    return this.cars.filter(car => {
+      const matchesCategory =
+        this.selectedCategory === "all" ||
+        car.category === this.selectedCategory;
 
-  computed: {
-    filteredCars() {
-      return this.cars.filter(car => {
+      const matchesType =
+        this.selectedVehicleType === "all" ||
+        car.vehicle_type === this.selectedVehicleType;
 
-        const categoryMatch =
-          this.selectedCategory === "all" ||
-          car.category === this.selectedCategory;
-
-        const typeMatch =
-          this.selectedVehicleType === "all" ||
-          car.vehicleType === this.selectedVehicleType;
-
-        return categoryMatch && typeMatch;
-      });
-    }
-  },
-
+      return matchesCategory && matchesType;
+    });
+  }
+},
   methods: {
     toggleSidebar() { this.sidebarOpen = !this.sidebarOpen },
 
