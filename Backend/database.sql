@@ -1,4 +1,3 @@
-CREATE DATABASE `mechanic_connect`;
 USE `mechanic_connect`;
 
 CREATE TABLE `mechanic_connect`.`users` (
@@ -496,3 +495,22 @@ VALUES
 UPDATE `mechanic_connect`.`payments`
 SET `amount` = 82.99
 WHERE `order_id` = 1 AND `transaction_ref` = 'MC-20260220-0001';
+
+ALTER TABLE `mechanic_connect`.`car_listing`
+ADD COLUMN `category` VARCHAR(50) NULL AFTER `fuel_capacity`,
+ADD COLUMN `vehicle_type` VARCHAR(50) NULL AFTER `category`;
+
+-- Sedans (petrol)
+UPDATE `mechanic_connect`.`car_listing`
+SET category = 'Sedan', vehicle_type = 'Petrol'
+WHERE model IN ('Corolla', 'Civic', 'Focus', 'Elantra', '3', 'Accord', 'Malibu');
+
+-- Truck (petrol)
+UPDATE `mechanic_connect`.`car_listing`
+SET category = 'Truck', vehicle_type = 'Petrol'
+WHERE model = 'F-150';
+
+-- Electric sedan
+UPDATE `mechanic_connect`.`car_listing`
+SET category = 'Sedan', vehicle_type = 'Electric'
+WHERE model = 'Model 3';
