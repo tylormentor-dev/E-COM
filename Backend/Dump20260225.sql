@@ -102,6 +102,8 @@ CREATE TABLE `car_listing` (
   `color` varchar(50) NOT NULL,
   `transmission` varchar(50) NOT NULL,
   `fuel_capacity` decimal(5,2) NOT NULL,
+  `category` varchar(50) DEFAULT NULL,
+  `vehicle_type` varchar(50) DEFAULT NULL,
   `description` text,
   `document_proof` varchar(255) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -118,7 +120,7 @@ CREATE TABLE `car_listing` (
 
 LOCK TABLES `car_listing` WRITE;
 /*!40000 ALTER TABLE `car_listing` DISABLE KEYS */;
-INSERT INTO `car_listing` VALUES (1,1,'Toyota','Corolla',2017,92000,11800.00,'Silver','Automatic',50.00,'Single owner, regular maintenance history.','docs/cars/corolla_2017.pdf','2026-02-23 10:04:58','2026-02-23 10:04:58'),(2,4,'Honda','Civic',2019,68000,15400.00,'White','Automatic',47.00,'Clean interior, recently serviced brakes.','docs/cars/civic_2019.pdf','2026-02-23 10:04:58','2026-02-23 10:04:58'),(3,5,'Ford','Focus',2016,104000,8700.00,'Blue','Manual',55.00,'Great commuter vehicle, minor paint scratches.','docs/cars/focus_2016.pdf','2026-02-23 10:04:58','2026-02-23 10:04:58'),(4,8,'Hyundai','Elantra',2018,85000,9900.00,'Black','Automatic',50.00,'Fuel efficient and smooth ride.','docs/cars/elantra_2018.pdf','2026-02-23 10:04:58','2026-02-23 10:04:58'),(5,9,'Mazda','3',2020,53000,12600.00,'Red','Automatic',51.00,'Well maintained, no accident history.','docs/cars/mazda3_2020.pdf','2026-02-23 10:04:58','2026-02-23 10:04:58'),(6,11,'Ford','F-150',2014,145000,18900.00,'Gray','Automatic',87.00,'Work truck, towing package included.','docs/cars/f150_2014.pdf','2026-02-23 10:04:58','2026-02-23 10:04:58'),(7,13,'Honda','Accord',2016,98000,14900.00,'Silver','CVT',56.00,'Excellent condition, new tires.','docs/cars/accord_2016.pdf','2026-02-23 10:04:58','2026-02-23 10:04:58'),(8,14,'Tesla','Model 3',2021,42000,38900.00,'White','Automatic',75.00,'Long Range, autopilot, clean title.','docs/cars/tesla_2021.pdf','2026-02-23 10:04:58','2026-02-23 10:04:58'),(9,1,'Chevrolet','Malibu',2020,61000,17200.00,'Blue','Automatic',62.00,'One owner, dealer maintained.','docs/cars/malibu_2020.pdf','2026-02-23 10:04:58','2026-02-23 10:04:58');
+INSERT INTO `car_listing` VALUES (1,1,'Toyota','Corolla',2017,92000,11800.00,'Silver','Automatic',50.00,'Sedan','Petrol','Single owner, regular maintenance history.','docs/cars/corolla_2017.pdf','2026-02-23 10:04:58','2026-02-25 10:27:01'),(2,4,'Honda','Civic',2019,68000,15400.00,'White','Automatic',47.00,'Sedan','Petrol','Clean interior, recently serviced brakes.','docs/cars/civic_2019.pdf','2026-02-23 10:04:58','2026-02-25 10:27:01'),(3,5,'Ford','Focus',2016,104000,8700.00,'Blue','Manual',55.00,'Sedan','Petrol','Great commuter vehicle, minor paint scratches.','docs/cars/focus_2016.pdf','2026-02-23 10:04:58','2026-02-25 10:27:01'),(4,8,'Hyundai','Elantra',2018,85000,9900.00,'Black','Automatic',50.00,'Sedan','Petrol','Fuel efficient and smooth ride.','docs/cars/elantra_2018.pdf','2026-02-23 10:04:58','2026-02-25 10:27:01'),(5,9,'Mazda','3',2020,53000,12600.00,'Red','Automatic',51.00,'Sedan','Petrol','Well maintained, no accident history.','docs/cars/mazda3_2020.pdf','2026-02-23 10:04:58','2026-02-25 10:27:01'),(6,11,'Ford','F-150',2014,145000,18900.00,'Gray','Automatic',87.00,'Truck','Petrol','Work truck, towing package included.','docs/cars/f150_2014.pdf','2026-02-23 10:04:58','2026-02-25 10:26:57'),(7,13,'Honda','Accord',2016,98000,14900.00,'Silver','CVT',56.00,'Sedan','Petrol','Excellent condition, new tires.','docs/cars/accord_2016.pdf','2026-02-23 10:04:58','2026-02-25 10:27:01'),(8,14,'Tesla','Model 3',2021,42000,38900.00,'White','Automatic',75.00,'Sedan','Electric','Long Range, autopilot, clean title.','docs/cars/tesla_2021.pdf','2026-02-23 10:04:58','2026-02-25 10:26:11'),(9,1,'Chevrolet','Malibu',2020,61000,17200.00,'Blue','Automatic',62.00,'Sedan','Petrol','One owner, dealer maintained.','docs/cars/malibu_2020.pdf','2026-02-23 10:04:58','2026-02-25 10:27:01');
 /*!40000 ALTER TABLE `car_listing` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -435,4 +437,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-02-23 12:14:34
+-- Dump completed on 2026-02-25 12:37:57
