@@ -101,6 +101,36 @@
         </div>
 
         <div class="form-group">
+          <label for="id-number" class="la-username">ID Number (optional)</label>
+          <input
+            v-model="signupData.id_number"
+            type="text"
+            class="username"
+            placeholder="Enter your ID number"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="location" class="la-username">Location (optional)</label>
+          <input
+            v-model="signupData.location"
+            type="text"
+            class="username"
+            placeholder="Enter your location (city, region)"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="dob" class="la-username">Date of Birth (optional)</label>
+          <input
+            v-model="signupData.dob"
+            type="date"
+            class="username"
+            placeholder="Date of birth"
+          >
+        </div>
+
+        <div class="form-group">
           <label for="signup-password" class="la-password">Password</label>
           <div class="password-wrapper">
             <input 
@@ -554,6 +584,9 @@ const signupData = ref({
   fullname: '',
   email: '',
   phone: '',
+  id_number: '',
+  location: '',
+  dob: '',
   password: '',
   confirmPassword: '',
   role: 'customer'
@@ -617,6 +650,9 @@ async function handleSignup() {
       fullname: signupData.value.fullname,
       email: signupData.value.email,
       phone: signupData.value.phone || null,
+      id_number: signupData.value.id_number || null,
+      dob: signupData.value.dob || null,
+      location: signupData.value.location || null,
       password: signupData.value.password,
       role: signupData.value.role
     })

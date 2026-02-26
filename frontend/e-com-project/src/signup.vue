@@ -10,6 +10,7 @@
           <input type="email" v-model="email" placeholder="Email" required />
           <input type="text" v-model="phone" placeholder="Phone Number" required />
           <input type="text" v-model="id_number" placeholder="ID Number" required />
+          <input type="text" v-model="location" placeholder="Location" required />
           <input type="date" v-model="dob" placeholder="Date of Birth" required />
           <input type="password" v-model="password" placeholder="Password" required />
           <button type="submit">Register</button>
@@ -31,11 +32,12 @@ export default {
      return {
        fullname: "",
        email: "",
-       phone:"",
-       id_number:"",   
-       dob:"",
+      phone:"",
+      id_number:"",   
+      location: "",
+      dob:"",
 
-       password: ""
+      password: ""
      }
     },
     methods: {
@@ -47,6 +49,7 @@ export default {
               phone: this.phone,
               id_number: this.id_number,
               dob: this.dob,
+              location: this.location,
               password: this.password
             });
     

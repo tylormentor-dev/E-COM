@@ -39,7 +39,7 @@
 
       <div class="row">
         <label>Preferred Mechanic</label>
-        <div v-if="selectedMechanicId">Selected: {{ selectedMechanicName }}</div>
+        <div v-if="selectedMechanicId">Selected: {{ selectedMechanic}}</div>
         <div v-else class="note">Choose a mechanic below and click Book.</div>
       </div>
 
@@ -48,6 +48,7 @@
       </div>
     </form>
 
+
     <div v-if="loadingMechanics">Loading mechanics...</div>
 
     <div v-if="mechanics.length">
@@ -55,8 +56,8 @@
       <div class="mechanic-list">
         <div class="mechanic-card" v-for="m in mechanics" :key="m.id">
           <p style="font-size: 12px; color: #999; margin: 0 0 6px 0;">ID: {{ m.id }}</p>
-          <h4>{{ m.fullname || 'Unnamed' }}</h4>
-          <p><strong>Location:</strong> {{ m.location }}</p>
+          <h4>{{ m.id|| 'Unnamed' }}</h4>
+          <p><strong>Location:</strong> {{ m.location}}</p>
           <p><strong>Phone:</strong> {{ m.phone || 'N/A' }}</p>
           <p><strong>Email:</strong> {{ m.email || 'N/A' }}</p>
           <p><strong>Bio:</strong> {{ m.bio || '—' }}</p>
@@ -88,6 +89,29 @@ import axios from 'axios'
 import AppLayout from './components/AppLayout.vue'
 
 const api = axios.create({ baseURL: 'http://localhost:3000' })
+
+// Add interceptors for debugging
+api.interceptors.request.use(
+  config => {
+    console.log('[REQUEST INTERCEPTOR] URL:', config.url, 'Params:', config.params)
+    return config
+  },
+  error => {
+    console.error('[REQUEST INTERCEPTOR ERROR]', error)
+    return Promise.reject(error)
+  }
+)
+
+api.interceptors.response.use(
+  response => {
+    console.log('[RESPONSE INTERCEPTOR] Status:', response.status, 'Data:', response.data)
+    return response
+  },
+  error => {
+    console.error('[RESPONSE INTERCEPTOR ERROR] Status:', error.response?.status, 'Error:', error.message)
+    return Promise.reject(error)
+  }
+)
 
 const locations = ref([])
 const selectedLocation = ref('')
@@ -127,35 +151,7 @@ async function fetchLocations() {
     console.error(err)
     errorMessage.value = 'Failed to load locations.'
   }
-}
-
-async function fetchMechanics(location) {
-  // Robust fetching: always set loading state, handle empty/invalid location
-  loadingMechanics.value = true
-  mechanics.value = []
-  errorMessage.value = ''
-  if (!location) {
-    // nothing selected yet
-    loadingMechanics.value = false
-    return
-  }
-
-  try {
-    console.log('Fetching mechanics for location:', location)
-    const res = await api.get('/mechanics', { params: { location } })
-    mechanics.value = res.data || []
-    console.log('Mechanics fetched:', mechanics.value)
-    if (!mechanics.value.length) {
-      // helpful message when none found
-      errorMessage.value = `No mechanics found for ${location}.`
-    }
-  } catch (err) {
-    console.error('fetchMechanics error:', err)
-    errorMessage.value = err?.response?.data?.error || 'Failed to load mechanics for the selected location.'
-  } finally {
-    loadingMechanics.value = false
-  }
-}
+};
 
 function onLocationChange(e) {
   successMessage.value = ''

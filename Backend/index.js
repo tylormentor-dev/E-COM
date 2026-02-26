@@ -29,11 +29,11 @@ app.get('/spares', async (req, res) => {
   }
 });
 
-// Get distinct mechanic locations
+// Get distinct mechanic locations from users table
 app.get('/locations', async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT DISTINCT location FROM mechanics WHERE location IS NOT NULL');
-    const locations = rows.map(r => r.location);
+    const [rows] = await pool.query('SELECT DISTINCT address as location FROM users WHERE role = ?', ['mechanic']);
+    const locations = rows.map(r => r.location).filter(l => l);
     res.json(locations);
   } catch (error) {
     console.error('Error fetching locations:', error);
@@ -41,15 +41,16 @@ app.get('/locations', async (req, res) => {
   }
 });
 
-// Get mechanics for a given location
+// Get mechanics for a given location - query from users table directly
 app.get('/mechanics', async (req, res) => {
   const { location } = req.query;
   if (!location) return res.status(400).json({ error: 'location query parameter is required' });
   try {
-    const sql = `SELECT m.*, u.fullname, u.email, u.phone, u.address
-                 FROM mechanics m
-                 LEFT JOIN users u ON m.user_id = u.id
-                 WHERE m.location = ?`;
+    const sql = `SELECT u.id, u.fullname, u.email, u.phone, u.address, u.role, 
+                 m.id as mechanic_id, m.bio, m.years_experience, m.rating, m.availability, m.notes_on_pricing
+                 FROM users u
+                 LEFT JOIN mechanics m ON u.id = m.user_id
+                 WHERE u.role = 'mechanic' AND u.address = ?`;
     const [rows] = await pool.query(sql, [location]);
     res.json(rows);
   } catch (error) {
@@ -92,9 +93,9 @@ app.post('/requests', async (req, res) => {
 });
 
 // Auth Endpoints
-// POST /signup - Register a new user
-app.post('/signup', async (req, res) => {
-  const { fullname, email, password, phone, address, role } = req.body;
+// Shared user registration logic used by /signup and /register
+async function registerUser(req, res) {
+  const { fullname, email, password, phone, address, role, id_number, dob, location } = req.body;
   if (!fullname || !email || !password) {
     return res.status(400).json({ error: 'fullname, email, and password required' });
   }
@@ -110,13 +111,22 @@ app.post('/signup', async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
-    // Insert user
+    // Insert user with location if mechanic
     const userRole = role && (role === 'mechanic' || role === 'admin') ? role : 'customer';
-    const sql = 'INSERT INTO users (fullname, email, password_hash, phone, address, role) VALUES (?, ?, ?, ?, ?, ?)';
-    const [result] = await pool.query(sql, [fullname, email, passwordHash, phone || null, address || null, userRole]);
+    const mechanicLocation = userRole === 'mechanic' ? (location || null) : null;
+    const sql = 'INSERT INTO users (fullname, email, password_hash, phone, address, id_number, dob, role) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+    const [result] = await pool.query(sql, [fullname, email, passwordHash, phone || null, location || address || null, id_number || null, dob || null, userRole]);
 
     const userId = result.insertId;
     const token = jwt.sign({ id: userId, email, role: userRole }, JWT_SECRET, { expiresIn: '7d' });
+    // If a location is provided, create a mechanics record for this user
+    if (location) {
+      try {
+        await pool.query('INSERT INTO mechanics (user_id, location) VALUES (?, ?)', [userId, location]);
+      } catch (mechErr) {
+        console.error('Failed to create mechanic record:', mechErr);
+      }
+    }
 
     res.status(201).json({ 
       id: userId, 
@@ -124,6 +134,9 @@ app.post('/signup', async (req, res) => {
       fullname, 
       phone: phone || null,
       address: address || null,
+      id_number: id_number || null,
+      dob: dob || null,
+      location: location || null,
       role: userRole, 
       token 
     });
@@ -131,7 +144,11 @@ app.post('/signup', async (req, res) => {
     console.error('Error during signup:', error);
     res.status(500).json({ error: 'Failed to register user' });
   }
-});
+}
+
+// Expose both paths so frontend using either endpoint will store users in MySQL
+app.post('/signup', registerUser);
+app.post('/register', registerUser);
 
 // POST /login - Authenticate user
 app.post('/login', async (req, res) => {
@@ -465,7 +482,7 @@ app.get('/bookings', async (req, res) => {
 });
 
 // GET /bookings/mechanic - get bookings assigned to mechanic (requires mechanic to be logged in)
-app.get('/bookings/mechanic', async (req, res) => {
+app.get('/bookings/mechanics', async (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'No token provided' });
@@ -554,6 +571,8 @@ app.post('/bookings', async (req, res) => {
 });
 
 // Get bookings for logged-in user
+// For mechanics: shows pending bookings at their location
+// For customers: shows all their created bookings
 app.get('/bookings', async (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'No token provided' });
@@ -561,13 +580,92 @@ app.get('/bookings', async (req, res) => {
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
     const userId = decoded.id;
+    const userRole = decoded.role;
 
-    const sql = `SELECT b.*, u.fullname as mechanic_name FROM bookings b LEFT JOIN users u ON b.mechanic_id = u.id WHERE b.user_id = ? ORDER BY b.created_at DESC`;
-    const [rows] = await pool.query(sql, [userId]);
+    let sql, params;
+    if (userRole === 'mechanic') {
+      // Get mechanic's location and fetch pending bookings at that location
+      const [mechRows] = await pool.query('SELECT location FROM mechanics WHERE user_id = ?', [userId]);
+      if (mechRows.length === 0) {
+        return res.json([]);
+      }
+      const mechanicLocation = mechRows[0].location;
+      sql = `SELECT b.*, u.fullname as mechanic_name, c.fullname as client_fullname 
+             FROM bookings b 
+             LEFT JOIN users u ON b.mechanic_id = u.id
+             LEFT JOIN users c ON b.user_id = c.id
+             WHERE b.status = 'pending' AND b.location = ?
+             ORDER BY b.created_at DESC`;
+      params = [mechanicLocation];
+    } else {
+      // Customer sees their own bookings
+      sql = `SELECT b.*, u.fullname as mechanic_name FROM bookings b LEFT JOIN users u ON b.mechanic_id = u.id WHERE b.user_id = ? ORDER BY b.created_at DESC`;
+      params = [userId];
+    }
+    const [rows] = await pool.query(sql, params);
     res.json(rows);
   } catch (error) {
     console.error('Error fetching bookings:', error);
     res.status(401).json({ error: 'Failed to fetch bookings' });
+  }
+});
+
+// POST /bookings/:id/accept - Mechanic accepts a booking
+app.post('/bookings/:id/accept', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'No token provided' });
+  const token = authHeader.slice(7);
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const userId = decoded.id;
+    const bookingId = req.params.id;
+
+    const [rows] = await pool.query('SELECT * FROM bookings WHERE id = ?', [bookingId]);
+    if (rows.length === 0) return res.status(404).json({ error: 'Booking not found' });
+    const booking = rows[0];
+    if (booking.status !== 'pending') return res.status(400).json({ error: 'Only pending bookings can be accepted' });
+
+    // Verify mechanic is at correct location
+    const [mechRows] = await pool.query('SELECT location FROM mechanics WHERE user_id = ?', [userId]);
+    if (mechRows.length === 0 || mechRows[0].location !== booking.location) {
+      return res.status(403).json({ error: 'Not authorized to accept this booking' });
+    }
+
+    // Update booking: set mechanic_id and status to accepted
+    await pool.query('UPDATE bookings SET mechanic_id = ?, status = ? WHERE id = ?', [userId, 'accepted', bookingId]);
+    res.json({ success: true, id: bookingId, status: 'accepted' });
+  } catch (error) {
+    console.error('Error accepting booking:', error);
+    res.status(401).json({ error: 'Failed to accept booking' });
+  }
+});
+
+// POST /bookings/:id/reject - Mechanic rejects a booking
+app.post('/bookings/:id/reject', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'No token provided' });
+  const token = authHeader.slice(7);
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const userId = decoded.id;
+    const bookingId = req.params.id;
+
+    const [rows] = await pool.query('SELECT * FROM bookings WHERE id = ?', [bookingId]);
+    if (rows.length === 0) return res.status(404).json({ error: 'Booking not found' });
+    const booking = rows[0];
+    if (booking.status !== 'pending') return res.status(400).json({ error: 'Only pending bookings can be rejected' });
+
+    // Verify mechanic is at correct location
+    const [mechRows] = await pool.query('SELECT location FROM mechanics WHERE user_id = ?', [userId]);
+    if (mechRows.length === 0 || mechRows[0].location !== booking.location) {
+      return res.status(403).json({ error: 'Not authorized to reject this booking' });
+    }
+
+    await pool.query('UPDATE bookings SET status = ? WHERE id = ?', ['rejected', bookingId]);
+    res.json({ success: true, id: bookingId, status: 'rejected' });
+  } catch (error) {
+    console.error('Error rejecting booking:', error);
+    res.status(401).json({ error: 'Failed to reject booking' });
   }
 });
 
