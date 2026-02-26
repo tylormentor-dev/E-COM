@@ -35,6 +35,7 @@
             <li><router-link to="/mechanics" class="nav-link"><span class="label">Mechanics</span></router-link></li>
             <li><router-link to="/bookings" class="nav-link"><span class="label">Bookings</span></router-link></li>
             <li><router-link to="/profile" class="nav-link"><span class="label">Profile</span></router-link></li>
+            <li><router-link to="/checkout" class="nav-link"><span class="label">Checkout</span></router-link></li>
             <li><router-link to="/orders" class="nav-link"><span class="label">Orders</span></router-link></li>
             <li><router-link to="/history" class="nav-link"><span class="label">History</span></router-link></li>
           </ul>
