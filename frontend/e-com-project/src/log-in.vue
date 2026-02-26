@@ -1,47 +1,30 @@
 <template>
   <div class="login-container">
-    <header class="header">
-      <div class="header-content">
-        <div class="logo-section">
-          <img class="logo-image" alt="Company Logo">
-        </div>
-        <div class="company-info">
-          <h1 class="company-name">{{ companyname }}</h1>
-          <h3 class="slogan">{{ slogan }}</h3>
-        </div>
-
-      </div>
-    </header>
-
-    <section class="login-section">
-      <form @submit.prevent="handleLogin" class="log-form">
+    <AppLayout>
+      <section class="login-section">
+      <!-- Login Form -->
+      <form v-if="!isSignup" @submit.prevent="handleLogin" class="log-form">
         <h1 class="log-title">Welcome Back</h1>
         <p class="login-subtitle">Sign in to your account</p>
 
         <div class="form-group">
-          <label for="username" class="la-username">
-             Username
-          </label>
+          <label for="email" class="la-username">Email</label>
           <input 
-            v-model="username"
-            type="text" 
+            v-model="loginData.email"
+            type="email" 
             class="username" 
-            name="username" 
-            placeholder="Enter your username"
+            placeholder="Enter your email"
             required
           >
         </div>
 
         <div class="form-group">
-          <label for="password" class="la-password">
-             Password
-          </label>
+          <label for="password" class="la-password">Password</label>
           <div class="password-wrapper">
             <input 
-              v-model="password"
+              v-model="loginData.password"
               :type="showPassword ? 'text' : 'password'" 
               class="password" 
-              name="password" 
               placeholder="Enter your password"
               required
             >
@@ -51,14 +34,14 @@
               @click="showPassword = !showPassword"
               :title="showPassword ? 'Hide password' : 'Show password'"
             >
-              {{ showPassword ? 'X' : '👁️' }}
+              {{ showPassword ? '✕' : '👁️' }}
             </button>
           </div>
         </div>
 
         <div class="checkbox-group">
           <input 
-            v-model="rememberMe"
+            v-model="loginData.rememberMe"
             type="checkbox" 
             id="remember" 
             class="remember-checkbox"
@@ -66,19 +49,118 @@
           <label for="remember" class="remember-label">Remember me</label>
         </div>
 
+        <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
+
         <div class="l-btns">
-          <button type="submit" class="log-in-btn">Log In</button>
-          <button type="button" @click="navigateToSignUp" class="sign-up-btn">Sign Up</button>
+          <button type="submit" class="log-in-btn" :disabled="isLoading">
+            {{ isLoading ? 'Logging in...' : 'Log In' }}
+          </button>
+          <button type="button" @click="isSignup = true" class="sign-up-btn">Sign Up</button>
         </div>
 
         <button type="button" @click="handleForgotPassword" class="forgot-password-btn">
           Forgot Password?
         </button>
       </form>
-    </section>
+
+      <!-- Signup Form -->
+      <form v-else @submit.prevent="handleSignup" class="log-form">
+        <h1 class="log-title">Create Account</h1>
+        <p class="login-subtitle">Sign up to get started</p>
+
+        <div class="form-group">
+          <label for="fullname" class="la-username">Full Name</label>
+          <input 
+            v-model="signupData.fullname"
+            type="text" 
+            class="username" 
+            placeholder="Enter your full name"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="signup-email" class="la-username">Email</label>
+          <input 
+            v-model="signupData.email"
+            type="email" 
+            class="username" 
+            placeholder="Enter your email"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="phone" class="la-username">Phone (optional)</label>
+          <input 
+            v-model="signupData.phone"
+            type="tel" 
+            class="username" 
+            placeholder="Enter your phone number"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="signup-password" class="la-password">Password</label>
+          <div class="password-wrapper">
+            <input 
+              v-model="signupData.password"
+              :type="showPasswordSignup ? 'text' : 'password'" 
+              class="password" 
+              placeholder="Enter your password"
+              required
+            >
+            <button 
+              type="button" 
+              class="toggle-password-btn"
+              @click="showPasswordSignup = !showPasswordSignup"
+            >
+              {{ showPasswordSignup ? '✕' : '👁️' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="confirm-password" class="la-password">Confirm Password</label>
+          <div class="password-wrapper">
+            <input 
+              v-model="signupData.confirmPassword"
+              :type="showConfirmPassword ? 'text' : 'password'" 
+              class="password" 
+              placeholder="Confirm your password"
+              required
+            >
+            <button 
+              type="button" 
+              class="toggle-password-btn"
+              @click="showConfirmPassword = !showConfirmPassword"
+            >
+              {{ showConfirmPassword ? '✕' : '👁️' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="role" class="la-username">Account Type</label>
+          <select v-model="signupData.role" class="username" required>
+            <option value="customer">Customer</option>
+            <option value="mechanic">Mechanic</option>
+          </select>
+        </div>
+
+        <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
+
+        <div class="l-btns">
+          <button type="submit" class="log-in-btn" :disabled="isLoading">
+            {{ isLoading ? 'Creating account...' : 'Sign Up' }}
+          </button>
+          <button type="button" @click="isSignup = false" class="sign-up-btn">Back to Login</button>
+        </div>
+      </form>
+      </section>
+    </AppLayout>
   </div>
 </template>
-
 
 <style scoped>
 * {
@@ -89,7 +171,7 @@
 
 .login-container {
   min-height: 100vh;
-  background-image:url(auto-parts-1.jpg);
+  background-image: url(auto-parts-1.jpg);
   background-repeat: no-repeat;
   background-size: cover;
   display: flex;
@@ -97,7 +179,7 @@
 }
 
 .header {
-  background:  linear-gradient(135deg, #080808, #383838, rgb(143, 142, 142), #56555a);
+  background: linear-gradient(135deg, #080808, #383838, rgb(143, 142, 142), #56555a);
   padding: 20px 40px;
   border-bottom: 3px solid rgba(212, 212, 212, 0.61);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
@@ -207,6 +289,8 @@
   width: 100%;
   max-width: 420px;
   animation: slideUp 0.8s ease-out;
+  max-height: 85vh;
+  overflow-y: auto;
 }
 
 @keyframes slideUp {
@@ -248,11 +332,6 @@
   font-size: 14px;
   margin-bottom: 8px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-.icon {
-  margin-right: 8px;
-  font-size: 16px;
 }
 
 .username,
@@ -327,6 +406,16 @@
   user-select: none;
 }
 
+.error-message {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  font-size: 14px;
+  border: 1px solid #f5c6cb;
+}
+
 .l-btns {
   display: flex;
   gap: 12px;
@@ -355,13 +444,18 @@
   box-shadow: 0 4px 15px rgba(195, 198, 211, 0.4);
 }
 
-.log-in-btn:hover {
+.log-in-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(90, 94, 109, 0.6);
 }
 
-.log-in-btn:active {
+.log-in-btn:active:not(:disabled) {
   transform: translateY(0);
+}
+
+.log-in-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .sign-up-btn {
@@ -401,7 +495,6 @@
   transform: scale(1.05);
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .header-content {
     flex-direction: column;
@@ -433,56 +526,126 @@
 }
 </style>
 
-<script>
-import axios from "axios";
+<script setup>
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import axios from 'axios'
 
-export default {
-  name: 'LoginPage',
+const router = useRouter()
+const api = axios.create({ baseURL: 'http://localhost:3000' })
 
-  data() {
-    return {
-      username: '',
-      password: '',
-      rememberMe: false,
-      showPassword: false,
-      errorMessage: '',
-      companyname: 'MECHANIC CONNECT',
-      slogan: 'Your Best Friend In Automotive Solutions'
-    }
-  },
+const isSignup = ref(false)
+const isLoading = ref(false)
+const showPassword = ref(false)
+const showPasswordSignup = ref(false)
+const showConfirmPassword = ref(false)
+const errorMessage = ref('')
 
-  methods: {
-    async handleLogin() {
-      try {
-        const response = await axios.post(
-          "http://localhost:3000/login",
-          {
-            email: this.username,  
-            password: this.password
-          }
-        );
+const companyname = ref('MECHANIC CONNECT')
+const slogan = ref('Your Best Friend In Automotive Solutions')
 
-        localStorage.setItem("user", JSON.stringify(response.data.user));
+const loginData = ref({
+  email: '',
+  password: '',
+  rememberMe: false
+})
 
-        this.$router.push("/dashboard"); 
+const signupData = ref({
+  fullname: '',
+  email: '',
+  phone: '',
+  password: '',
+  confirmPassword: '',
+  role: 'customer'
+})
 
-      } catch (error) {
-        this.errorMessage =
-          error.response?.data?.message || "Login failed";
-        alert(this.errorMessage);
-      }
-    },
+async function handleLogin() {
+  errorMessage.value = ''
+  if (!loginData.value.email || !loginData.value.password) {
+    errorMessage.value = 'Please fill in all fields'
+    return
+  }
 
-    navigateToSignUp() {
-      this.$router.push("/register");
-    },
+  isLoading.value = true
+  try {
+    const res = await api.post('/login', {
+      email: loginData.value.email,
+      password: loginData.value.password
+    })
 
-    handleForgotPassword() {
-      const email = prompt('Please enter your registered email address:');
-      if (email) {
-        alert('Password reset link has been sent to ' + email);
-      }
-    }
+    localStorage.setItem('token', res.data.token)
+    localStorage.setItem('user', JSON.stringify({
+      id: res.data.id,
+      email: res.data.email,
+      fullname: res.data.fullname,
+      phone: res.data.phone,
+      address: res.data.address,
+      dob: res.data.dob,
+      id_number: res.data.id_number,
+      profile_image: res.data.profile_image,
+      role: res.data.role
+    }))
+
+    router.push('/dashboard')
+  } catch (err) {
+    errorMessage.value = err?.response?.data?.error || 'Login failed'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+async function handleSignup() {
+  errorMessage.value = ''
+  if (!signupData.value.fullname || !signupData.value.email || !signupData.value.password) {
+    errorMessage.value = 'Please fill in required fields'
+    return
+  }
+
+  if (signupData.value.password !== signupData.value.confirmPassword) {
+    errorMessage.value = 'Passwords do not match'
+    return
+  }
+
+  if (signupData.value.password.length < 6) {
+    errorMessage.value = 'Password must be at least 6 characters'
+    return
+  }
+
+  isLoading.value = true
+  try {
+    const res = await api.post('/signup', {
+      fullname: signupData.value.fullname,
+      email: signupData.value.email,
+      phone: signupData.value.phone || null,
+      password: signupData.value.password,
+      role: signupData.value.role
+    })
+
+    localStorage.setItem('token', res.data.token)
+    localStorage.setItem('user', JSON.stringify({
+      id: res.data.id,
+      email: res.data.email,
+      fullname: res.data.fullname,
+      phone: res.data.phone,
+      address: res.data.address,
+      dob: res.data.dob,
+      id_number: res.data.id_number,
+      profile_image: res.data.profile_image,
+      role: res.data.role
+    }))
+
+    router.push('/dashboard')
+  } catch (err) {
+    errorMessage.value = err?.response?.data?.error || 'Signup failed'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+function handleForgotPassword() {
+  const email = prompt('Please enter your registered email address:')
+  if (email) {
+    errorMessage.value = 'Password reset link sent to ' + email
   }
 }
 </script>

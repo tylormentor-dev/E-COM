@@ -1,57 +1,6 @@
 <template>
   <div class="dealership-container">
-    <!-- Header (same as dashboard) -->
-    <header class="header">
-      <div class="header-content">
-        <div class="logo-section">
-          <img class="logo-image" alt="Company Logo">
-        </div>
-        <div class="company-info">
-          <h1 class="company-name">{{ companyname }}</h1>
-          <h3 class="slogan">{{ slogan }}</h3>
-        </div>
-      </div>
-    </header>
-
-    <!-- Search Container (same as dashboard) -->
-    <div class="search-container">
-      <div class="search-bar">
-        <span class="search-icon">🔍</span>
-        <input type="search" class="search" placeholder="Search cars by model, price, year...">
-      </div>
-    </div>
-
-    <div class="main-wrapper">
-      <!-- Sidebar (same as dashboard) -->
-      <nav :class="['side-bar', { collapsed: !sidebarOpen }]">
-        <div :class="['side-inner', { collapsed: !sidebarOpen }]" :aria-hidden="!sidebarOpen">
-          <div class="side-header">
-            <div>
-              <h2 class="nav-heading">DEALERSHIP</h2>
-              <h5 class="mini-heading">Browse our certified deals</h5>
-            </div>
-          </div>
-          <ul class="nav-list">
-            <li><router-link to="/dashboard" class="nav-link"><span class="label">Dashboard</span></router-link></li>
-            <li><router-link to="/spares" class="nav-link"><span class="label">Spares</span></router-link></li>
-            <li><router-link to="/dealership" class="nav-link active"><span class="label">Dealership</span></router-link></li>
-            <li><router-link to="/mechanics" class="nav-link"><span class="label">Mechanics</span></router-link></li>
-            <li><router-link to="/bookings" class="nav-link"><span class="label">Bookings</span></router-link></li>
-            <li><router-link to="/profile" class="nav-link"><span class="label">Profile</span></router-link></li>
-            <li><router-link to="/orders" class="nav-link"><span class="label">Orders</span></router-link></li>
-            <li><router-link to="/history" class="nav-link"><span class="label">History</span></router-link></li>
-          </ul>
-        </div>
-      </nav>
-
-      <!-- Toggle Button -->
-      <button
-        class="toggle-btn"
-        @click="toggleSidebar"
-        aria-label="Toggle sidebar">
-        {{ sidebarOpen? '‹' : '›' }}
-      </button>
-
+    <AppLayout>
       <main class="dealership-main">
         <!-- Vehicle Type Navigation -->
         <div class="vehicle-nav">
@@ -89,7 +38,9 @@
         <!-- Cars Grid -->
         <div class="cars-section">
           <h2 class="section-title">{{ getSectionTitle() }}</h2>
-          <div v-if="filteredCars.length > 0" class="cars-grid">
+            <div v-if="loading" class="loading">Loading cars...</div>
+            <div v-else-if="fetchError" class="error-message">{{ fetchError }}</div>
+            <div v-else-if="filteredCars.length > 0" class="cars-grid">
            <div v-for="car in filteredCars" :key="car.id" class="car-card">
               <div class="car-image-container">
                 <img :src="car.image" :alt="car.name" class="car-image">
@@ -109,13 +60,13 @@
   <span class="spec"><span class="spec-icon"></span>{{ car.document_proof }}</span>
 </div>
 
-<div class="car-footer">
-  <div class="car-price">
-    <span class="price-label">Price</span>
-    <span class="price-value">R{{ car.price }}</span>
+    <div class="car-footer">
+    <div class="car-price">
+      <span class="price-label">Price</span>
+      <span class="price-value">R{{ car.price }}</span>
+    </div>
+    <button @click="openCheckout(car)" class="buy-btn">Buy Now</button>
   </div>
-  <button class="buy-btn">Buy Now</button>
-</div>
               </div>
             </div>
           </div>
@@ -126,45 +77,57 @@
           </div>
         </div>
       </main>
-    </div>
+    </AppLayout>
   </div>
 </template>
 
 <script>
 import axios from "axios";
+import AppLayout from './components/AppLayout.vue'
 
 export default {
+  components: { AppLayout },
   data() {
   return {
     cars: [],
+    loading: false,
+    fetchError: '',
     sidebarOpen: true,   
     selectedCategory: "all",
     selectedVehicleType: "all",
+    // immediate checkout is handled by centralized /checkout page
       categories: [
         { id: "all", name: "All" },
-        { id: "new", name: "New" },
-        { id: "used", name: "Used" }
+        { id: "sedan", name: "Sedan" },
+        { id: "truck", name: "Truck" }
       ],
 
       vehicleTypes: [
         { id: "all", name: "All Vehicles" },
-        { id: "sedan", name: "Sedan" },
-        { id: "suv", name: "SUV" },
-        { id: "hatchback", name: "Hatchback" },
-        { id: "truck", name: "Truck" }
+        { id: "petrol", name: "Petrol" },
+        { id: "electric", name: "Electric" }
       ]
     };
   },
 computed: {
   filteredCars() {
-    return this.cars.filter(car => {
-      const matchesCategory =
-        this.selectedCategory === "all" ||
-        car.category === this.selectedCategory;
+    const selCat = (this.selectedCategory || '').toString().toLowerCase();
+    const selType = (this.selectedVehicleType || '').toString().toLowerCase();
 
-      const matchesType =
-        this.selectedVehicleType === "all" ||
-        car.vehicle_type === this.selectedVehicleType;
+    const includesMatch = (field, value) => {
+      if (field == null) return false;
+      if (Array.isArray(field)) {
+        return field.some(f => f && f.toString().toLowerCase().includes(value));
+      }
+      return field.toString().toLowerCase().includes(value);
+    };
+
+    return this.cars.filter(car => {
+      const carCategory = car.category || '';
+      const carType = car.vehicle_type || '';
+
+      const matchesCategory = selCat === 'all' || includesMatch(carCategory, selCat);
+      const matchesType = selType === 'all' || includesMatch(carType, selType);
 
       return matchesCategory && matchesType;
     });
@@ -173,9 +136,24 @@ computed: {
   methods: {
     toggleSidebar() { this.sidebarOpen = !this.sidebarOpen },
 
+    openCheckout(car) {
+      // navigate to central checkout page with car details in query params
+      this.$router.push({ path: '/checkout', query: {
+        car_id: car.id,
+        name: car.name,
+        price: car.price,
+        image: car.image
+      }})
+    },
+
     getCategoryCount(categoryId) {
-      if (categoryId === "all") return this.cars.length;
-      return this.cars.filter(car => car.category === categoryId).length;
+      const sel = (categoryId || '').toString().toLowerCase();
+      if (sel === 'all') return this.cars.length;
+      return this.cars.filter(car => {
+        const cat = car.category || '';
+        if (Array.isArray(cat)) return cat.some(c => c && c.toString().toLowerCase().includes(sel));
+        return cat.toString().toLowerCase().includes(sel);
+      }).length;
     },
 
     getSectionTitle() {
@@ -187,12 +165,18 @@ computed: {
   },
 
   async mounted() {
+  this.loading = true
+  this.fetchError = ''
   try {
     const response = await axios.get("http://localhost:3000/cars");
-    this.cars = response.data;
+    this.cars = response.data || [];
     console.log("Cars loaded:", this.cars);
+    console.log('dealership mounted, cars length', (this.cars && this.cars.length) || 0)
   } catch (error) {
     console.error("Error fetching cars:", error);
+    this.fetchError = error?.response?.data?.error || 'Failed to load cars'
+  } finally {
+    this.loading = false
   }
 }
 };
@@ -267,6 +251,37 @@ computed: {
   box-shadow: 0 0 15px rgba(246, 247, 252, 0.5);
   animation: bounce 2s infinite;
 }
+
+/* Checkout panel styles */
+.checkout-panel {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.4);
+  z-index: 60;
+}
+.checkout-card {
+  width: 520px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+  overflow: hidden;
+}
+.checkout-header {
+  display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1px solid #eee;
+}
+.checkout-body { padding: 18px 20px; }
+.checkout-item { display:flex; gap:12px; align-items:center }
+.checkout-image { width:140px; height:90px; object-fit:cover; border-radius:6px }
+.checkout-info h4 { margin:0 0 6px 0 }
+.price { font-weight:700; color:#1f6feb }
+.checkout-actions { display:flex; gap:10px; padding:12px 20px; border-top:1px solid #eee; justify-content:flex-end }
+.cancel-btn { background:#f0f0f0; padding:10px 16px; border-radius:6px; border:none }
+.confirm-btn { background:linear-gradient(135deg,#1f6feb 0%,#0d47a1 100%); color:white; padding:10px 16px; border-radius:6px; border:none }
+.close-checkout { background:none; border:none; font-size:18px; cursor:pointer }
+.checkout-error { color:#721c24; background:#f8d7da; padding:8px; border-radius:6px; margin-top:12px }
 
 @keyframes bounce {
   0%, 100% {
