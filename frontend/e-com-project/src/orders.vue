@@ -42,7 +42,7 @@
           </div>
           <div class="order-info">
             <p><strong>Date:</strong> {{ formatDate(order.created_at) }}</p>
-            <p><strong>Total:</strong> ${{ parseFloat(order.total_price).toFixed(2) }}</p>
+            <p><strong>Total:</strong> R{{ parseFloat(order.total_price).toFixed(2) }}</p>
             <p><strong>Delivery:</strong> {{ order.delivery_address }}</p>
           </div>
           <div class="order-actions">
@@ -102,7 +102,7 @@
                 </div>
                 <div class="item-price">
                   <p><strong>Qty:</strong> {{ item.quantity }}</p>
-                  <p><strong>Price:</strong> ${{ parseFloat(item.price).toFixed(2) }}</p>
+                  <p><strong>Price:</strong> R{{ parseFloat(item.price).toFixed(2) }}</p>
                 </div>
               </div>
             </div>
@@ -112,7 +112,7 @@
           <div class="detail-section total-section">
             <div class="total-row">
               <label>Total Amount:</label>
-              <span class="total-amount">${{ parseFloat(selectedOrderData.total_price).toFixed(2) }}</span>
+              <span class="total-amount">R{{ parseFloat(selectedOrderData.total_price).toFixed(2) }}</span>
             </div>
           </div>
           <div v-if="selectedOrderData && selectedOrderData.status === 'pending'" class="detail-actions">

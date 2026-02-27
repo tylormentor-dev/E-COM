@@ -43,7 +43,12 @@
             <div v-else-if="filteredCars.length > 0" class="cars-grid">
            <div v-for="car in filteredCars" :key="car.id" class="car-card">
               <div class="car-image-container">
-                <img :src="car.image" :alt="car.name" class="car-image">
+                <img
+                  :src="resolveCarImage(car)"
+                  :alt="`${car.name || 'Car'} ${car.model || ''}`.trim()"
+                  class="car-image"
+                  @error="onCarImageError($event, car)"
+                >
                 <div class="car-badge" :class="car.category">{{ car.category }}</div>
                 <div class="car-overlay">
                   <button class="view-details-btn">View Details</button>
@@ -142,8 +147,26 @@ computed: {
         car_id: car.id,
         name: car.name,
         price: car.price,
-        image: car.image
+        image: this.resolveCarImage(car)
       }})
+    },
+
+    buildPlaceholderImage(label) {
+      const safe = String(label || 'Vehicle').slice(0, 28)
+      const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='800' height='500'><rect width='100%' height='100%' fill='#0d47a1'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='44' fill='#ffffff' font-family='Arial,sans-serif'>${safe}</text></svg>`
+      return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
+    },
+
+    resolveCarImage(car) {
+      const img = car?.image
+      if (typeof img === 'string' && (img.startsWith('http://') || img.startsWith('https://') || img.startsWith('data:image/'))) {
+        return img
+      }
+      return this.buildPlaceholderImage(`${car?.name || 'Car'} ${car?.model || ''}`.trim())
+    },
+
+    onCarImageError(event, car) {
+      event.target.src = this.buildPlaceholderImage(`${car?.name || 'Car'} ${car?.model || ''}`.trim())
     },
 
     getCategoryCount(categoryId) {
@@ -169,7 +192,10 @@ computed: {
   this.fetchError = ''
   try {
     const response = await axios.get("http://localhost:3000/cars");
-    this.cars = response.data || [];
+    this.cars = (response.data || []).map((car) => ({
+      ...car,
+      image: this.resolveCarImage(car)
+    }));
     console.log("Cars loaded:", this.cars);
     console.log('dealership mounted, cars length', (this.cars && this.cars.length) || 0)
   } catch (error) {

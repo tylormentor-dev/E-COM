@@ -1,10 +1,11 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "MECHANIC-CONNECT backend API",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon index.js",
+    "start": "node index.js"
   },
   "keywords": [],
   "author": "",
@@ -15,9 +16,13 @@
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
+    "express-rate-limit": "^7.4.1",
+    "express-validator": "^7.2.0",
+    "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.0",
-    "mysql": "^2.18.1",
+    "morgan": "^1.10.0",
     "mysql2": "^3.18.0",
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.14",
+    "stripe": "^18.1.1"
   }
 }

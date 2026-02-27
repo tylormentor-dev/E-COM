@@ -24,13 +24,13 @@
         <div v-if="error" class="error-message">{{ error }}</div>
         <div v-if="!loading && filteredParts.length" class="parts-grid">
           <div v-for="part in filteredParts" :key="part.id" class="part-card">
-            <div class="part-image" :style="{ backgroundImage: `url(${part.image})` }"></div>
+            <div class="part-image" :style="partImageStyle(part)"></div>
             <div class="part-info">
               <h3 class="part-name">{{ part.name }}</h3>
               <p class="part-category">{{ part.category }}</p>
               <p class="part-desc">{{ part.size || part.capacity || 'Standard' }}</p>
               <div class="part-footer">
-                <div class="part-price">${{ parseFloat(part.price).toFixed(2) }}</div>
+                <div class="part-price">R{{ parseFloat(part.price).toFixed(2) }}</div>
                 <button
                   @click="isInCart(part.id) ? removeFromCart(part.id) : addToCart(part)"
                   :class="['add-btn', { added: isInCart(part.id) }]"
@@ -56,10 +56,10 @@
         <div v-else class="cart-content">
           <div class="cart-items">
             <div v-for="item in cart" :key="`${item.id}-${item.quantity}`" class="cart-item">
-              <div class="item-image" :style="{ backgroundImage: `url(${item.image})` }"></div>
+              <div class="item-image" :style="itemImageStyle(item)"></div>
               <div class="item-details">
                 <h4>{{ item.name }}</h4>
-                <p class="item-price">${{ parseFloat(item.price).toFixed(2) }}</p>
+                <p class="item-price">R{{ parseFloat(item.price).toFixed(2) }}</p>
               </div>
               <div class="item-quantity">
                 <button @click="decrementQty(item.id)" class="qty-btn">-</button>
@@ -67,7 +67,7 @@
                 <button @click="incrementQty(item.id)" class="qty-btn">+</button>
               </div>
               <div class="item-total">
-                ${{ (parseFloat(item.price) * item.quantity).toFixed(2) }}
+                R{{ (parseFloat(item.price) * item.quantity).toFixed(2) }}
               </div>
               <button @click="removeFromCart(item.id)" class="remove-btn">🗑️</button>
             </div>
@@ -76,15 +76,15 @@
           <div class="cart-summary">
             <div class="summary-row">
               <span>Subtotal:</span>
-              <span>${{ calculateSubtotal().toFixed(2) }}</span>
+              <span>R{{ calculateSubtotal().toFixed(2) }}</span>
             </div>
             <div class="summary-row">
               <span>Tax (10%):</span>
-              <span>${{ (calculateSubtotal() * 0.1).toFixed(2) }}</span>
+              <span>R{{ (calculateSubtotal() * 0.1).toFixed(2) }}</span>
             </div>
             <div class="summary-row total">
               <span>Total:</span>
-              <span>${{ calculateTotal().toFixed(2) }}</span>
+              <span>R{{ calculateTotal().toFixed(2) }}</span>
             </div>
           </div>
 
@@ -166,6 +166,30 @@ function toggleCart() {
   showCart.value = !showCart.value
 }
 
+function buildPlaceholderImage(label, bg = '#215732') {
+  const safe = String(label || 'Spare Part').slice(0, 28)
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='600' height='400'><rect width='100%' height='100%' fill='${bg}'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='34' fill='#ffffff' font-family='Arial,sans-serif'>${safe}</text></svg>`
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
+}
+
+function resolveImage(url, label, bg = '#215732') {
+  if (typeof url === 'string') {
+    const trimmed = url.trim()
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:image/')) {
+      return trimmed
+    }
+  }
+  return buildPlaceholderImage(label, bg)
+}
+
+function partImageStyle(part) {
+  return { backgroundImage: `url(${resolveImage(part?.image, part?.name || 'Part')})` }
+}
+
+function itemImageStyle(item) {
+  return { backgroundImage: `url(${resolveImage(item?.image, item?.name || 'Cart Item')})` }
+}
+
 function getSectionTitle() {
   const cat = categories.value.find(c => c.id === selectedCategory.value)?.name || 'Parts'
   return `${cat}`
@@ -186,7 +210,13 @@ async function fetchParts() {
 }
 
 function addToCart(part) {
-  storeAddToCart({ id: part.id, name: part.name, price: part.price, image: part.image, quantity: 1 })
+  storeAddToCart({
+    id: part.id,
+    name: part.name,
+    price: part.price,
+    image: resolveImage(part.image, part.name),
+    quantity: 1
+  })
 }
 
 function isInCart(partId) {

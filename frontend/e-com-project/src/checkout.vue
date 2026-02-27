@@ -7,7 +7,12 @@
         <div v-if="itemsToPurchase.length === 0" class="empty">No items to purchase.</div>
 
         <div v-for="it in itemsToPurchase" :key="it.id" class="summary-item">
-          <img v-if="it.image" :src="it.image" class="item-img" />
+          <img
+            :src="resolveCheckoutImage(it)"
+            :alt="it.name || 'Item image'"
+            class="item-img"
+            @error="onCheckoutImageError($event, it)"
+          />
           <div class="item-meta">
             <div class="item-name">{{ it.name }}</div>
             <div class="item-desc">Quantity: {{ it.quantity || 1 }}</div>
@@ -133,6 +138,33 @@ const subtotal = computed(() => {
 })
 const total = computed(() => subtotal.value + (subtotal.value * 0.1))
 
+function buildPlaceholderImage(label, bg = '#0d47a1') {
+  const safe = String(label || 'Item').slice(0, 28)
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='700' height='450'><rect width='100%' height='100%' fill='${bg}'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='38' fill='#ffffff' font-family='Arial,sans-serif'>${safe}</text></svg>`
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
+}
+
+function resolveCheckoutImage(item) {
+  const image = item?.image
+  if (typeof image === 'string') {
+    const trimmed = image.trim()
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:image/')) {
+      return trimmed
+    }
+  }
+  return buildPlaceholderImage(
+    item?.name || (item?.car ? 'Vehicle' : 'Spare Part'),
+    item?.car ? '#0d47a1' : '#215732'
+  )
+}
+
+function onCheckoutImageError(event, item) {
+  event.target.src = buildPlaceholderImage(
+    item?.name || (item?.car ? 'Vehicle' : 'Spare Part'),
+    item?.car ? '#0d47a1' : '#215732'
+  )
+}
+
 function buildQrSvg(text = 'Scan to pay') {
   // Simple SVG placeholder QR-like box with text — not a real QR.
   const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect width='100%' height='100%' fill='#fff' stroke='#222'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='12' fill='#222'>${text}</text></svg>`
@@ -153,13 +185,17 @@ onMounted(() => {
       quantity: 1,
       car: true
     }
+    item.image = resolveCheckoutImage(item)
     itemsToPurchase.value = [item]
     return
   }
 
   // Otherwise use cart
   if (cartState.items && cartState.items.length) {
-    itemsToPurchase.value = cartState.items.map(i => ({ ...i }))
+    itemsToPurchase.value = cartState.items.map(i => ({
+      ...i,
+      image: resolveCheckoutImage(i)
+    }))
   }
 })
 

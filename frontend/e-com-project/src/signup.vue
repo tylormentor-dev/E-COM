@@ -23,11 +23,10 @@
 
 <script> 
 import axios from "axios";
+import AppLayout from "./components/AppLayout.vue";
 
 export default {
-  components: {
-    AppLayout: () => import('./components/AppLayout.vue')
-  },
+  components: { AppLayout },
    data() {
      return {
        fullname: "",
