@@ -11,6 +11,7 @@
         </div>
       </div>
 
+<<<<<<< HEAD
       <nav class="nav-list">
         <RouterLink
           v-for="item in navItems"
@@ -22,6 +23,37 @@
           <span class="nav-badge">{{ item.badge }}</span>
           <span v-if="sidebarOpen" class="nav-label">{{ item.label }}</span>
         </RouterLink>
+=======
+    <div class="search-container">
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input type="search" class="search" placeholder="Search services, mechanics, or bookings...">
+      </div>
+    </div>
+
+    <div class="main-wrapper">
+      <nav :class="['side-bar', { collapsed: !sidebarOpen }]">
+        <div :class="['side-inner', { collapsed: !sidebarOpen }]" :aria-hidden="!sidebarOpen">
+          <div class="side-header">
+            <div>
+              <h2 class="nav-heading">SERVICES</h2>
+              <h5 class="mini-heading">Welcome back!</h5>
+            </div>
+          </div>
+          <ul class="nav-list">
+            <li><router-link to="/dashboard" class="nav-link"><span class="label">Dashboard</span></router-link></li>
+            <li><router-link to="/spares" class="nav-link"><span class="label">Spares</span></router-link></li>
+            <li><router-link to="/dealership" class="nav-link"><span class="label">Dealership</span></router-link></li>
+            <li><router-link to="/mechanics" class="nav-link"><span class="label">Mechanics</span></router-link></li>
+            <li><router-link to="/mechanic-requests" class="nav-link"><span class="label">Requests</span></router-link></li>
+            <li><router-link to="/bookings" class="nav-link"><span class="label">Bookings</span></router-link></li>
+            <li><router-link to="/profile" class="nav-link"><span class="label">Profile</span></router-link></li>
+            <li><router-link to="/checkout" class="nav-link"><span class="label">Checkout</span></router-link></li>
+            <li><router-link to="/orders" class="nav-link"><span class="label">Orders</span></router-link></li>
+            <li><router-link to="/history" class="nav-link"><span class="label">History</span></router-link></li>
+          </ul>
+        </div>
+>>>>>>> 78ba20db8e5f3d8d593c637600462bf4a68d21e1
       </nav>
 
       <div class="sidebar-footer">
