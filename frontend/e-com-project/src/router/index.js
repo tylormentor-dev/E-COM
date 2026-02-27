@@ -10,7 +10,8 @@ import profile from '@/profile.vue'
 import orders from '@/orders.vue'
 import checkout from '@/checkout.vue'
 import bookings from '@/bookings.vue'
-
+import AppLayout from '@/components/AppLayout.vue'
+import history from '@/history.vue'
 
 
 const routes = [
@@ -26,6 +27,9 @@ const routes = [
   { path: '/checkout', name: 'Checkout', component: checkout, meta: { requiresAuth: true } },
   { path: '/:pathMatch(.*)*', redirect: '/' },// catch-all route to redirect to login
   { path: '/bookings', name: 'Bookings', component: bookings, meta: { requiresAuth: true } },
+  { path: '/history', name: 'History', component: history, meta: { requiresAuth: true } },
+  { path: '/app', name: 'AppLayout', component: AppLayout, meta: { requiresAuth: true } },
+
 ]
 
 const router = createRouter({

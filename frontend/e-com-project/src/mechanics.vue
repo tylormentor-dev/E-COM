@@ -31,8 +31,10 @@
         </div>
 
         <div class="row actions">
-          <button type="submit" :disabled="submitting">{{ submitting ? 'Submitting...' : 'Submit Request' }}</button>
-        </div>
+         
+            <input type="datetime-local" v-model="scheduledAt" />
+            <button type="submit" :disabled="submitting">{{ submitting ? 'Submitting...' : 'Submit Request' }}</button>
+          </div>
       </form>
 
       <div v-if="successMessage" class="success">{{ successMessage }}</div>
@@ -58,6 +60,10 @@ const form = ref({
   description: ''
 })
 
+const mechanics = ref([])
+const selectedMechanicId = ref('')
+const scheduledAt = ref('')
+
 const successMessage = ref('')
 const errorMessage = ref('')
 
@@ -71,8 +77,13 @@ function validateForm() {
     errorMessage.value = 'Please enter a valid year.'
     return false
   }
+  if (!scheduledAt.value) {
+    errorMessage.value = 'Please select a desired schedule time.'
+    return false
+  }
   return true
 }
+
 
 async function submitForm() {
   errorMessage.value = ''
@@ -89,15 +100,17 @@ async function submitForm() {
     }
 
     const payload = {
+      mechanic_id: selectedMechanicId.value || null,
       clientName: form.value.clientName,
       contact: form.value.contact,
       carModel: form.value.carModel,
       year: parseInt(form.value.year, 10),
-      description: form.value.description
+      description: form.value.description,
+      scheduled_at: scheduledAt.value
     }
 
-    const res = await api.post('/requests', payload, { headers: { Authorization: `Bearer ${token}` } })
-    successMessage.value = `Your request has been submitted (ID: ${res.data.id}). Mechanics will review and respond shortly.`
+    const res = await api.post('/bookings', payload, { headers: { Authorization: `Bearer ${token}` } })
+    successMessage.value = `Booking created (id: ${res.data.id}). Status: ${res.data.status || 'pending'}`
 
     // clear form on success
     form.value.clientName = ''
@@ -105,17 +118,15 @@ async function submitForm() {
     form.value.carModel = ''
     form.value.year = ''
     form.value.description = ''
+    scheduledAt.value = ''
+
   } catch (err) {
     console.error(err)
-    errorMessage.value = err?.response?.data?.error || 'Failed to submit request.'
+    errorMessage.value = err?.response?.data?.error || 'Failed to create booking.'
   } finally {
     submitting.value = false
   }
-}
-
-onMounted(() => {
-  // Component ready - no initial data fetch needed
-})
+};
 </script>
 
 <style scoped>
