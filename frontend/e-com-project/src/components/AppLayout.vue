@@ -33,6 +33,7 @@
             <li><router-link to="/spares" class="nav-link"><span class="label">Spares</span></router-link></li>
             <li><router-link to="/dealership" class="nav-link"><span class="label">Dealership</span></router-link></li>
             <li><router-link to="/mechanics" class="nav-link"><span class="label">Mechanics</span></router-link></li>
+            <li><router-link to="/mechanic-requests" class="nav-link"><span class="label">Requests</span></router-link></li>
             <li><router-link to="/bookings" class="nav-link"><span class="label">Bookings</span></router-link></li>
             <li><router-link to="/profile" class="nav-link"><span class="label">Profile</span></router-link></li>
             <li><router-link to="/checkout" class="nav-link"><span class="label">Checkout</span></router-link></li>

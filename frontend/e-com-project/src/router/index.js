@@ -5,6 +5,7 @@ import dealership from '@/cars-delerships.vue'
 import spares from '@/spares.vue'
 import register from '@/signup.vue'
 import mechanics from '@/mechanics.vue'
+import mechanicRequests from '@/mechanic-requests.vue'
 import profile from '@/profile.vue'
 import orders from '@/orders.vue'
 import checkout from '@/checkout.vue'
@@ -19,6 +20,7 @@ const routes = [
   { path: '/spares', name: 'Spares', component: spares, meta: { requiresAuth: true } },
   { path: '/register', name: 'Register', component: register, meta: { requiresAuth: false } },
   { path: '/mechanics', name: 'Mechanics', component: mechanics, meta: { requiresAuth: true } },
+  { path: '/mechanic-requests', name: 'Requests', component: mechanicRequests, meta: { requiresAuth: true } },
   { path: '/profile', name: 'Profile', component: profile, meta: { requiresAuth: true } },
   { path: '/orders', name: 'Orders', component: orders, meta: { requiresAuth: true } },
   { path: '/checkout', name: 'Checkout', component: checkout, meta: { requiresAuth: true } },
