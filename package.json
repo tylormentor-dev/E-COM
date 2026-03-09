@@ -1,0 +1,10 @@
+{
+  "name": "e-com-workspace",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix frontend/e-com-project run dev",
+    "dev:frontend": "npm --prefix frontend/e-com-project run dev",
+    "dev:backend": "npm --prefix Backend run dev",
+    "start:backend": "npm --prefix Backend run start"
+  }
+}

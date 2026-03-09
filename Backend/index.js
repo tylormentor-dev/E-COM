@@ -8,13 +8,34 @@ import pool from "./db.js";
 dotenv.config();
 
 const app = express();
-<<<<<<< HEAD
 const PORT = Number(process.env.PORT || 3000);
 const JWT_SECRET = process.env.JWT_SECRET || "change_this_in_production";
 
+const envOrigins = (process.env.CORS_ORIGIN || "")
+  .split(",")
+  .map((v) => v.trim())
+  .filter(Boolean);
+
+const staticAllowedOrigins = new Set([
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "http://localhost:5174",
+  "http://127.0.0.1:5174",
+  ...envOrigins,
+]);
+
+function isAllowedOrigin(origin) {
+  if (!origin) return true;
+  if (staticAllowedOrigins.has(origin)) return true;
+  return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+}
+
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || "http://localhost:5173",
+    origin(origin, callback) {
+      if (isAllowedOrigin(origin)) return callback(null, true);
+      return callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
     credentials: true,
   }),
 );
@@ -69,6 +90,30 @@ function normalizeImage(image, label, bg) {
     }
   }
   return buildPlaceholderImage(label, bg);
+}
+
+function looksLikeBcryptHash(value) {
+  return typeof value === "string" && /^\$2[aby]\$\d{2}\$/.test(value);
+}
+
+async function verifyAndUpgradeLegacyPassword(user, password) {
+  const stored = user.password_hash || "";
+
+  if (looksLikeBcryptHash(stored)) {
+    return bcrypt.compare(password, stored);
+  }
+
+  // Legacy seed data used non-bcrypt placeholders such as "hash_name_2026".
+  // Allow one-time login and migrate to bcrypt to restore normal auth behavior.
+  const legacyMatch =
+    password === stored ||
+    (stored.startsWith("hash_") && password === stored.slice(5));
+
+  if (!legacyMatch) return false;
+
+  const upgraded = await bcrypt.hash(password, 10);
+  await pool.query("UPDATE users SET password_hash = ? WHERE id = ?", [upgraded, user.id]);
+  return true;
 }
 
 async function ensureCompatibility() {
@@ -319,7 +364,7 @@ app.post("/login", async (req, res) => {
     }
 
     const user = rows[0];
-    const valid = await bcrypt.compare(password, user.password_hash);
+    const valid = await verifyAndUpgradeLegacyPassword(user, password);
     if (!valid) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
@@ -755,174 +800,3 @@ ensureCompatibility()
     console.error("Failed to initialize compatibility layer", error);
     process.exit(1);
   });
-=======
-app.use(cors());
-app.use(express.json());
-
-const JWT_SECRET = 'supersecretkey';
-
-/* ===========================
-   REGISTER
-=========================== */
-app.post('/register', async (req, res) => {
-  try {
-    const { full_name, email, password, role } = req.body;
-
-    if (!full_name || !email || !password || !role) {
-      return res.status(400).json({ error: 'All fields are required' });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    await pool.query(
-      `INSERT INTO users (full_name, email, password, role)
-       VALUES (?, ?, ?, ?)`,
-      [full_name, email, hashedPassword, role]
-    );
-
-    res.json({ message: 'User registered successfully' });
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Registration failed' });
-  }
-});
-
-/* ===========================
-   LOGIN
-=========================== */
-app.post('/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    const [rows] = await pool.query(
-      `SELECT * FROM users WHERE email = ?`,
-      [email]
-    );
-
-    if (rows.length === 0) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    const user = rows[0];
-
-    const isMatch = await bcrypt.compare(password, user.password);
-
-    if (!isMatch) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    const token = jwt.sign(
-      { id: user.id, role: user.role },
-      JWT_SECRET,
-      { expiresIn: '1d' }
-    );
-
-    res.json({
-      message: 'Login successful',
-      token,
-      user: {
-        id: user.id,
-        full_name: user.full_name,
-        role: user.role
-      }
-    });
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Login failed' });
-  }
-});
-
-/* ===========================
-   AUTH MIDDLEWARE
-=========================== */
-function authenticateToken(req, res, next) {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (!token) return res.sendStatus(401);
-
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) return res.sendStatus(403);
-    req.user = user;
-    next();
-  });
-}
-
-/* ===========================
-   CREATE BOOKING (CLIENT)
-=========================== */
-app.post('/bookings', authenticateToken, async (req, res) => {
-  try {
-    const { clientName, contact, carModel, year, description, scheduled_at } = req.body;
-
-    if (!clientName || !contact || !carModel || !year || !description) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    const userId = req.user.id;
-
-    await pool.query(
-      `INSERT INTO bookings 
-       (user_id, client_name, contact, car_model, year, description, scheduled_at, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`,
-      [userId, clientName, contact, carModel, year, description, scheduled_at]
-    );
-
-    res.json({ message: 'Booking created successfully' });
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Booking failed' });
-  }
-});
-
-/* ===========================
-   GET ALL BOOKINGS (MECHANICS SEE ALL)
-=========================== */
-app.get('/bookings', authenticateToken, async (req, res) => {
-  try {
-    const [rows] = await pool.query(`
-      SELECT b.*, u.full_name
-      FROM bookings b
-      JOIN users u ON b.user_id = u.id
-      ORDER BY b.id DESC
-    `);
-
-    res.json(rows);
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to fetch bookings' });
-  }
-});
-
-/* ===========================
-   UPDATE BOOKING STATUS
-=========================== */
-app.post('/bookings/:id/status', authenticateToken, async (req, res) => {
-  try {
-    const { status } = req.body;
-    const bookingId = req.params.id;
-
-    await pool.query(
-      `UPDATE bookings SET status = ? WHERE id = ?`,
-      [status, bookingId]
-    );
-
-    res.json({ message: 'Status updated successfully' });
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Status update failed' });
-  }
-});
-
-/* ===========================
-   START SERVER
-=========================== */
-app.listen(3000, () => {
-  console.log('Server running on http://localhost:3000');
-});
->>>>>>> 78ba20db8e5f3d8d593c637600462bf4a68d21e1

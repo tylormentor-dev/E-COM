@@ -3,66 +3,59 @@
     <div v-if="mobileMenuOpen" class="mobile-overlay" @click="closeMobileMenu"></div>
 
     <aside :class="['sidebar', { collapsed: !sidebarOpen, open: mobileMenuOpen }]">
-      <div class="brand-block">
-        <div class="brand-mark">MC</div>
-        <div v-if="sidebarOpen" class="brand-copy">
-          <h1>Mechanic Connect</h1>
-          <p>Auto services platform</p>
-        </div>
-      </div>
-
-<<<<<<< HEAD
-      <nav class="nav-list">
-        <RouterLink
-          v-for="item in navItems"
-          :key="item.to"
-          :to="item.to"
-          class="nav-item"
-          @click="closeMobileMenu"
-        >
-          <span class="nav-badge">{{ item.badge }}</span>
-          <span v-if="sidebarOpen" class="nav-label">{{ item.label }}</span>
-        </RouterLink>
-=======
-    <div class="search-container">
-      <div class="search-bar">
-        <span class="search-icon">🔍</span>
-        <input type="search" class="search" placeholder="Search services, mechanics, or bookings...">
-      </div>
-    </div>
-
-    <div class="main-wrapper">
-      <nav :class="['side-bar', { collapsed: !sidebarOpen }]">
-        <div :class="['side-inner', { collapsed: !sidebarOpen }]" :aria-hidden="!sidebarOpen">
-          <div class="side-header">
-            <div>
-              <h2 class="nav-heading">SERVICES</h2>
-              <h5 class="mini-heading">Welcome back!</h5>
-            </div>
+      <div class="sidebar-top">
+        <div class="brand-block">
+          <div class="brand-mark">MC</div>
+          <div v-if="sidebarOpen" class="brand-copy">
+            <p class="brand-kicker">Garage Suite</p>
+            <h1>Mechanic Connect</h1>
           </div>
-          <ul class="nav-list">
-            <li><router-link to="/dashboard" class="nav-link"><span class="label">Dashboard</span></router-link></li>
-            <li><router-link to="/spares" class="nav-link"><span class="label">Spares</span></router-link></li>
-            <li><router-link to="/dealership" class="nav-link"><span class="label">Dealership</span></router-link></li>
-            <li><router-link to="/mechanics" class="nav-link"><span class="label">Mechanics</span></router-link></li>
-            <li><router-link to="/mechanic-requests" class="nav-link"><span class="label">Requests</span></router-link></li>
-            <li><router-link to="/bookings" class="nav-link"><span class="label">Bookings</span></router-link></li>
-            <li><router-link to="/profile" class="nav-link"><span class="label">Profile</span></router-link></li>
-            <li><router-link to="/checkout" class="nav-link"><span class="label">Checkout</span></router-link></li>
-            <li><router-link to="/orders" class="nav-link"><span class="label">Orders</span></router-link></li>
-            <li><router-link to="/history" class="nav-link"><span class="label">History</span></router-link></li>
-          </ul>
         </div>
->>>>>>> 78ba20db8e5f3d8d593c637600462bf4a68d21e1
-      </nav>
+
+        <nav class="nav-list" aria-label="Primary navigation">
+          <RouterLink
+            v-for="item in navItems"
+            :key="item.to"
+            :to="item.to"
+            :class="['nav-item', { 'is-active': route.path === item.to }]"
+            @click="closeMobileMenu"
+          >
+            <span class="nav-icon">{{ item.icon }}</span>
+            <span v-if="sidebarOpen" class="nav-copy">
+              <span class="nav-label">{{ item.label }}</span>
+              <span class="nav-meta">{{ item.meta }}</span>
+            </span>
+          </RouterLink>
+        </nav>
+      </div>
+
+      <div v-if="sidebarOpen" class="visual-stack">
+        <article class="visual-card" :style="{ backgroundImage: `url(${vehicleImage})` }">
+          <div class="visual-overlay">
+            <p>Vehicle Listings</p>
+            <strong>Find your next car faster</strong>
+          </div>
+        </article>
+
+        <article class="visual-card parts" :style="{ backgroundImage: `url(${partsImage})` }">
+          <div class="visual-overlay">
+            <p>Mechanical Parts</p>
+            <strong>Browse quality spares and accessories</strong>
+          </div>
+        </article>
+      </div>
 
       <div class="sidebar-footer">
         <div v-if="sidebarOpen" class="user-card">
-          <p class="user-name">{{ userName }}</p>
-          <p class="user-role">{{ userRole }}</p>
+          <div class="user-avatar">{{ userInitial }}</div>
+          <div>
+            <p class="user-name">{{ userName }}</p>
+            <p class="user-role">{{ userRole }}</p>
+          </div>
         </div>
+
         <button class="logout-btn" @click="logout">
-          <span class="nav-badge">LO</span>
+          <span class="logout-mark">LO</span>
           <span v-if="sidebarOpen">Logout</span>
         </button>
       </div>
@@ -72,19 +65,23 @@
       <header class="topbar">
         <div class="topbar-left">
           <button class="mobile-menu-btn" @click="toggleMobileMenu">Menu</button>
-          <button class="collapse-btn" @click="toggleSidebar">
-            {{ sidebarOpen ? 'Collapse' : 'Expand' }}
-          </button>
-          <h2 class="route-title">{{ routeTitle }}</h2>
+          <button class="collapse-btn" @click="toggleSidebar">{{ sidebarOpen ? 'Collapse' : 'Expand' }}</button>
+          <div class="title-wrap">
+            <h2 class="route-title">{{ routeTitle }}</h2>
+            <p class="route-subtitle">{{ routeSubtitle }}</p>
+          </div>
         </div>
 
-        <div class="search-wrap">
-          <input
-            v-model="searchText"
-            class="search-input"
-            type="search"
-            placeholder="Search services, bookings, parts"
-          />
+        <div class="topbar-right">
+          <div class="search-wrap">
+            <input
+              v-model="searchText"
+              class="search-input"
+              type="search"
+              placeholder="Search vehicles, parts, bookings"
+            />
+          </div>
+          <div class="status-pill">Live</div>
         </div>
       </header>
 
@@ -98,6 +95,8 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
+import partsImage from '@/assets/images/download5.jpg'
+import vehicleImage from '@/assets/images/image4.jpg'
 
 const route = useRoute()
 const router = useRouter()
@@ -107,15 +106,19 @@ const mobileMenuOpen = ref(false)
 const searchText = ref('')
 
 const navItems = [
-  { to: '/dashboard', label: 'Dashboard', badge: 'DB' },
-  { to: '/mechanics', label: 'Mechanics', badge: 'ME' },
-  { to: '/bookings', label: 'Bookings', badge: 'BK' },
-  { to: '/dealership', label: 'Dealership', badge: 'DL' },
-  { to: '/spares', label: 'Spares', badge: 'SP' },
-  { to: '/orders', label: 'Orders', badge: 'OR' },
-  { to: '/checkout', label: 'Checkout', badge: 'CO' },
-  { to: '/profile', label: 'Profile', badge: 'PR' }
+  { to: '/dashboard', label: 'Dashboard', icon: 'DB', meta: 'Overview and stats' },
+  { to: '/mechanics', label: 'Mechanics', icon: 'ME', meta: 'Find and book experts' },
+  { to: '/mechanic-requests', label: 'Requests', icon: 'RQ', meta: 'Incoming service requests' },
+  { to: '/bookings', label: 'Bookings', icon: 'BK', meta: 'Manage appointments' },
+  { to: '/dealership', label: 'Dealership', icon: 'DL', meta: 'Browse listed vehicles' },
+  { to: '/spares', label: 'Spares', icon: 'SP', meta: 'Mechanical parts catalog' },
+  { to: '/checkout', label: 'Checkout', icon: 'CO', meta: 'Review and pay' },
+  { to: '/orders', label: 'Orders', icon: 'OR', meta: 'Track purchases' },
+  { to: '/history', label: 'History', icon: 'HS', meta: 'Past activity' },
+  { to: '/profile', label: 'Profile', icon: 'PR', meta: 'Account settings' }
 ]
+
+const currentNavItem = computed(() => navItems.find((item) => item.to === route.path))
 
 const userName = computed(() => {
   try {
@@ -126,16 +129,20 @@ const userName = computed(() => {
   }
 })
 
+const userInitial = computed(() => String(userName.value).charAt(0).toUpperCase() || 'U')
+
 const userRole = computed(() => {
   try {
     const user = JSON.parse(localStorage.getItem('user') || '{}')
-    return (user.role || 'customer').toUpperCase()
+    const role = String(user.role || 'customer')
+    return role.charAt(0).toUpperCase() + role.slice(1)
   } catch {
-    return 'CUSTOMER'
+    return 'Customer'
   }
 })
 
-const routeTitle = computed(() => String(route.name || 'Dashboard'))
+const routeTitle = computed(() => currentNavItem.value?.label || String(route.name || 'Dashboard'))
+const routeSubtitle = computed(() => currentNavItem.value?.meta || 'Manage your vehicles, parts, and services')
 
 function toggleSidebar() {
   sidebarOpen.value = !sidebarOpen.value
@@ -158,121 +165,234 @@ function logout() {
 
 <style scoped>
 .layout-root {
-  --bg: #f3f6fb;
-  --panel: #ffffff;
-  --text: #132238;
-  --muted: #5d6b7a;
-  --line: #dce3ec;
-  --accent: #0c66e4;
-  --accent-strong: #094eb0;
+  --bg: #edf2f8;
+  --surface: #ffffff;
+  --ink: #122136;
+  --muted: #627086;
+  --line: #d5deea;
+  --accent: #0b7d69;
+  --accent-strong: #065f51;
+  --nav-start: #0f2135;
+  --nav-mid: #16314f;
+  --nav-end: #11253d;
   min-height: 100vh;
-  background: radial-gradient(1200px 500px at 20% -10%, #ddeafe 0%, #f3f6fb 45%, #f3f6fb 100%);
   display: flex;
+  background: radial-gradient(circle at 10% -20%, #dbeeff 0%, #edf2f8 42%, #edf2f8 100%);
+  color: var(--ink);
+  font-family: Poppins, 'Trebuchet MS', sans-serif;
 }
 
 .sidebar {
-  width: 268px;
-  background: linear-gradient(180deg, #102642 0%, #173d67 45%, #0f2f52 100%);
-  color: #eaf2fe;
-  padding: 18px 14px;
+  width: 310px;
+  background: linear-gradient(180deg, var(--nav-start) 0%, var(--nav-mid) 40%, var(--nav-end) 100%);
+  color: #e8f2ff;
+  padding: 16px;
   display: flex;
   flex-direction: column;
   border-right: 1px solid rgba(255, 255, 255, 0.14);
-  transition: width 0.2s ease;
+  position: relative;
+  overflow: hidden;
+  transition: width 0.24s ease;
   z-index: 20;
 }
 
+.sidebar::before {
+  content: '';
+  position: absolute;
+  top: -140px;
+  right: -60px;
+  width: 260px;
+  height: 260px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(68, 124, 212, 0.35), rgba(68, 124, 212, 0));
+  pointer-events: none;
+}
+
 .sidebar.collapsed {
-  width: 92px;
+  width: 96px;
+}
+
+.sidebar-top {
+  display: grid;
+  gap: 12px;
 }
 
 .brand-block {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 6px 8px 18px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  padding: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  background: rgba(7, 17, 29, 0.35);
 }
 
 .brand-mark {
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #49a0ff, #0c66e4);
-  color: #fff;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #1ba88d, #0b7d69);
   display: grid;
   place-items: center;
+  color: #ffffff;
+  font-size: 14px;
   font-weight: 800;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.4px;
+}
+
+.brand-copy {
+  min-width: 0;
+}
+
+.brand-kicker {
+  margin: 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.9px;
+  opacity: 0.72;
 }
 
 .brand-copy h1 {
-  font-size: 16px;
-  margin: 0;
-}
-
-.brand-copy p {
   margin: 2px 0 0;
-  font-size: 12px;
-  opacity: 0.75;
+  font-size: 16px;
+  line-height: 1.2;
 }
 
 .nav-list {
-  margin-top: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  display: grid;
+  gap: 7px;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 10px;
-  border-radius: 10px;
-  color: #d6e6ff;
+  min-height: 52px;
   text-decoration: none;
-  transition: background-color 0.18s ease, transform 0.18s ease;
+  color: #dcecff;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  animation: navFade 0.34s ease both;
 }
 
 .nav-item:hover {
-  background: rgba(255, 255, 255, 0.1);
-  transform: translateX(2px);
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(156, 204, 255, 0.3);
+  transform: translateX(3px);
 }
 
-.nav-item.router-link-active {
-  background: linear-gradient(135deg, rgba(73, 160, 255, 0.24), rgba(12, 102, 228, 0.28));
-  color: #ffffff;
-  box-shadow: inset 0 0 0 1px rgba(128, 191, 255, 0.28);
+.nav-item.is-active {
+  background: linear-gradient(135deg, rgba(11, 125, 105, 0.35), rgba(23, 171, 145, 0.2));
+  border-color: rgba(113, 219, 201, 0.45);
 }
 
-.nav-badge {
-  min-width: 32px;
-  height: 28px;
-  border-radius: 8px;
+.nav-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
   display: grid;
   place-items: center;
   font-size: 11px;
   font-weight: 700;
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.13);
+  color: #f5fbff;
+  flex-shrink: 0;
+}
+
+.nav-copy {
+  min-width: 0;
+  display: grid;
 }
 
 .nav-label {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav-meta {
+  margin-top: 2px;
+  font-size: 11px;
+  color: rgba(225, 239, 255, 0.78);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.visual-stack {
+  margin-top: 10px;
+  display: grid;
+  gap: 10px;
+}
+
+.visual-card {
+  height: 96px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+.visual-card.parts {
+  height: 82px;
+}
+
+.visual-overlay {
+  position: absolute;
+  inset: 0;
+  padding: 10px;
+  background: linear-gradient(160deg, rgba(6, 14, 24, 0.15), rgba(6, 14, 24, 0.8));
+  display: grid;
+  align-content: end;
+}
+
+.visual-overlay p {
+  margin: 0;
+  font-size: 10px;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.visual-overlay strong {
+  margin-top: 3px;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .sidebar-footer {
   margin-top: auto;
-  padding-top: 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  display: grid;
+  gap: 9px;
 }
 
 .user-card {
-  padding: 8px 10px;
-  margin-bottom: 8px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.09);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 12px;
+  padding: 9px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #1ba88d, #0b7d69);
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 800;
 }
 
 .user-name {
@@ -282,23 +402,33 @@ function logout() {
 }
 
 .user-role {
-  margin: 3px 0 0;
+  margin: 2px 0 0;
   font-size: 11px;
-  letter-spacing: 0.4px;
-  opacity: 0.85;
+  opacity: 0.76;
 }
 
 .logout-btn {
   width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(3, 10, 19, 0.3);
+  color: #e8f2ff;
+  border-radius: 10px;
+  padding: 9px;
   display: flex;
   align-items: center;
   gap: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(6, 18, 32, 0.25);
-  color: #eaf2fe;
-  border-radius: 10px;
-  padding: 10px 10px;
   cursor: pointer;
+}
+
+.logout-mark {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.14);
+  font-size: 10px;
+  font-weight: 700;
 }
 
 .layout-shell {
@@ -309,15 +439,15 @@ function logout() {
 }
 
 .topbar {
-  height: 72px;
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(6px);
-  border-bottom: 1px solid var(--line);
+  min-height: 78px;
   padding: 0 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 14px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(7px);
 }
 
 .topbar-left {
@@ -327,11 +457,69 @@ function logout() {
   min-width: 0;
 }
 
+.title-wrap {
+  min-width: 0;
+}
+
+.route-title {
+  margin: 0;
+  font-size: 20px;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.route-subtitle {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.search-wrap {
+  width: min(420px, 40vw);
+}
+
+.search-input {
+  width: 100%;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #ffffff;
+  color: var(--ink);
+  padding: 0 12px;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: rgba(11, 125, 105, 0.7);
+  box-shadow: 0 0 0 3px rgba(11, 125, 105, 0.16);
+}
+
+.status-pill {
+  border-radius: 999px;
+  border: 1px solid #bddfd8;
+  background: #e9f7f4;
+  color: #0b7d69;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 8px 11px;
+}
+
 .mobile-menu-btn,
 .collapse-btn {
   border: 1px solid var(--line);
-  background: var(--panel);
-  color: var(--text);
+  background: var(--surface);
+  color: var(--ink);
   border-radius: 8px;
   padding: 8px 10px;
   font-size: 12px;
@@ -342,35 +530,30 @@ function logout() {
   display: none;
 }
 
-.route-title {
-  margin: 0 0 0 2px;
-  color: var(--text);
-  font-size: 18px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.search-wrap {
-  width: min(420px, 45vw);
-}
-
-.search-input {
-  width: 100%;
-  height: 40px;
-  border-radius: 10px;
-  border: 1px solid var(--line);
-  padding: 0 12px;
-  color: var(--text);
-  background: #fff;
-}
-
 .content-area {
   padding: 22px;
 }
 
 .mobile-overlay {
   display: none;
+}
+
+@keyframes navFade {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 1100px) {
+  .search-wrap {
+    width: 260px;
+  }
 }
 
 @media (max-width: 980px) {
@@ -384,11 +567,11 @@ function logout() {
 
   .sidebar {
     position: fixed;
-    left: -290px;
     top: 0;
     bottom: 0;
-    width: 270px;
-    transition: left 0.2s ease;
+    left: -320px;
+    width: 300px;
+    transition: left 0.24s ease;
   }
 
   .sidebar.open {
@@ -399,24 +582,26 @@ function logout() {
     display: block;
     position: fixed;
     inset: 0;
-    background: rgba(4, 12, 21, 0.45);
     z-index: 15;
+    background: rgba(8, 17, 27, 0.5);
   }
 
   .search-wrap {
-    width: 180px;
+    width: 210px;
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 680px) {
   .topbar {
     padding: 0 12px;
   }
 
   .route-title {
-    font-size: 15px;
+    font-size: 17px;
   }
 
+  .route-subtitle,
+  .status-pill,
   .search-wrap {
     display: none;
   }
